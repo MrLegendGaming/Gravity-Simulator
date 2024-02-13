@@ -57,7 +57,7 @@ int main()
 	
 	// --------------------- WINDOW CREATION ---------------------
 	// Creates a window in OpenGL
-	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Gravity Simulator", NULL, NULL);
 	// Error checking for window if it fails to create
 	if (window == NULL)
 	{
