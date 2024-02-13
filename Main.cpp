@@ -17,7 +17,7 @@ int SCR_HEIGHT = 720;
 void processInput(GLFWwindow* window);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xPosIn, double yPosIn);
-void gravity(glm::vec3& position, float strength, glm::vec3& speed, glm::vec3 gravityPos);
+void gravity(glm::vec3& position, float strength, glm::vec3& speed, glm::vec3 gravityPos, float playSpeed);
 
 #include <random>
 
@@ -40,6 +40,9 @@ bool firstClick = true;
 // --------------------- TIMING MANAGEMENT ---------------------
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
+
+float playingSpeed = 0.0f;
+bool rewindPlay = false;
 
 int main()
 {
@@ -153,16 +156,11 @@ int main()
 
 		std::cout << f << std::endl;
 		startPositions[i] = glm::vec3(f * random_float(), f * random_float(), f * random_float());
-
+		//startPositions[i] = glm::vec3(f);
 		
 	}
 
 	for (int i = 0; i < posNum; i++)
-	{
-		newPosition[i] = startPositions[i];
-		//initialVelocity[i] = glm::vec3(random_float(), random_float(), random_float());
-		initialVelocity[i] = glm::vec3(1.0f, 0.0f, 0.0f);
-	}
 
 	float time;
 	
@@ -177,7 +175,6 @@ int main()
 		lastFrame = currentFrame;
 
 		frameCount++;
-
 
 		if (currentFrame - previousTime >= 1.0)
 		{
@@ -221,14 +218,13 @@ int main()
 			
 			if (i != 0)
 			{
-				gravity(newPosition[i], -25, initialVelocity[i], newPosition[0]);
+				gravity(newPosition[i], -25, initialVelocity[i], newPosition[0], playingSpeed);
 
 				glUniform3f(glGetUniformLocation(ourShader.ID, "ampColor"),
-					glm::sin(time* j),
-					glm::cos(time* j),
-					glm::atan(time* j)
+					glm::sin(time * j),
+					glm::cos(time * j),
+					glm::atan(time * j)
 				);
-
 			}
 			else
 			{
@@ -268,11 +264,13 @@ int main()
 
 void processInput(GLFWwindow* window)
 {
+	// -- WINDOW --
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 	{
 		glfwSetWindowShouldClose(window, true);
 	}
 
+	// -- MOVEMENT --
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 	{
 		camera.ProcessKeyboard(FORWARD, deltaTime);
@@ -302,7 +300,8 @@ void processInput(GLFWwindow* window)
 	{
 		camera.ProcessKeyboard(DOWN, deltaTime);
 	}
-
+	
+	//  -- MOUSE --
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
 	{
 		if (firstClick) 
@@ -314,6 +313,7 @@ void processInput(GLFWwindow* window)
 		}
 	}
 
+	
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
 	{
 		if (!firstClick)
@@ -324,6 +324,34 @@ void processInput(GLFWwindow* window)
 			firstClick = true;
 			firstMouse = true;
 		}
+	}
+	// -- PLAY SPEED --
+	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+	{
+		if (!rewindPlay)
+		{
+			playingSpeed *= -1;
+			rewindPlay = true;
+		}
+
+	}
+	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+	{
+		if (rewindPlay)
+		{
+			playingSpeed *= -1;
+			rewindPlay = false;
+		}
+	}
+
+	// Play and Pause
+	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+	{
+		playingSpeed = 1.0f;
+	}
+	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+	{
+		playingSpeed = 0.0f;
 	}
 
 }
@@ -357,7 +385,7 @@ void mouse_callback(GLFWwindow* window, double xPosIn, double yPosIn)
 
 }
 
-void gravity(glm::vec3 &position, float strength, glm::vec3 &speed, glm::vec3 gravityPos)
+void gravity(glm::vec3 &position, float strength, glm::vec3 &speed, glm::vec3 gravityPos, float playSpeed)
 {
 	float distanceX = position.x - gravityPos.x;
 	float distanceY = position.y - gravityPos.y;
@@ -377,12 +405,12 @@ void gravity(glm::vec3 &position, float strength, glm::vec3 &speed, glm::vec3 gr
 									   normalized_y * strength * inverse_square_dropoff,
 									   normalized_z * strength * inverse_square_dropoff);
 
-	speed.x += acceleration.x;
-	speed.y += acceleration.y;
-	speed.z += acceleration.z;
+	speed.x += acceleration.x * playSpeed;
+	speed.y += acceleration.y * playSpeed;
+	speed.z += acceleration.z * playSpeed;
 
-	position.x += speed.x;
-	position.y += speed.y;
-	position.z += speed.z;
+	position.x += speed.x * playSpeed;
+	position.y += speed.y * playSpeed;
+	position.z += speed.z * playSpeed;
 
 }
