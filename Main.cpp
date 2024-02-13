@@ -17,9 +17,7 @@ int SCR_HEIGHT = 720;
 void processInput(GLFWwindow* window);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xPosIn, double yPosIn);
-glm::vec3 calculateGravity(const glm::vec3& position1, float mass1, const glm::vec3& position2, float mass2);
 void gravity(glm::vec3& position, float strength, glm::vec3& speed, glm::vec3 gravityPos);
-
 
 #include <random>
 
@@ -37,46 +35,11 @@ float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
+bool firstClick = true;
+
 // --------------------- TIMING MANAGEMENT ---------------------
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
-
-// --------------------- VERTICES & INDICES ---------------------
-float vertices[] = {
-		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-		 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-		 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-
-		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-		 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		 0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		 0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
 
 int main()
 {
@@ -96,7 +59,7 @@ int main()
 	
 	// --------------------- WINDOW CREATION ---------------------
 	// Creates a window in OpenGL
-	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Gravity Simulator", NULL, NULL);
 	// Error checking for window if it fails to create
 	if (window == NULL)
 	{
@@ -115,10 +78,7 @@ int main()
 	glfwMakeContextCurrent(window);
 	// Changes the viewport to fit the screenwidth
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-	glfwSetCursorPosCallback(window, mouse_callback);
-
-	// Tells GLFW to hide and capture the mouse
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	
 
 	// Loads GLAD so we can use OpenGL and checks for errors if it fails
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -137,39 +97,16 @@ int main()
 
 
 	// --------------------- VERTEX MANAGEMENT ---------------------
-	// Generates a Vertex Array Object, Vertex Buffer & Object Index Buffer Objects and stores the vertices into them before sending them to the GPU
-	unsigned int VAO, VBO, EBO;
+	// Generates a Vertex Array Object & Sphere Objects and stores the vertices into them before sending them to the GPU
+	unsigned int VAO;
 	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
 
-	// 1. bind Vertex Array Object
+	// Binds Vertex Array Object
 	glBindVertexArray(VAO);
 
-	// 0. copy our vertices array in a buffer for OpenGL to use
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	// 1. then set the vertex attributes pointers
-	// Position Attributes
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	// Color Attributes
-	/*glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);*/
-	// Texture Attributes
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
-	// 0. copy our elements array in a buffer for OpenGL to use
-	/*glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);*/
-	
+	// Creates the sphere models for dawing
 	Sphere particle(0.25f);
 	Sphere sun(2.0f);
-	
-
-	
 
 	// --------------------- TRANSFORMATIONS ---------------------
 
@@ -179,19 +116,8 @@ int main()
 	// Fixes the Z-Axis buffer layering when drawing the cube
 	glEnable(GL_DEPTH_TEST);
 
-	glm::vec3 cubePositions[] = {
-		glm::vec3(0.0f,  0.0f,  0.0f),
-		glm::vec3(2.0f,  5.0f, -15.0f),
-		glm::vec3(-1.5f, -2.2f, -2.5f),
-		glm::vec3(-3.8f, -2.0f, -12.3f),
-		glm::vec3(2.4f, -0.4f, -3.5f),
-		glm::vec3(-1.7f,  3.0f, -7.5f),
-		glm::vec3(1.3f, -2.0f, -2.5f),
-		glm::vec3(1.5f,  2.0f, -2.5f),
-		glm::vec3(1.5f,  0.2f, -1.5f),
-		glm::vec3(-1.3f,  1.0f, -1.5f)
-	};
-
+	// Creates the positions and intiial velocities of the particles & sun
+	// Sun's coordinate is index 0 or (first in the array list)
 	glm::vec3 startPositions[10000];
 
 	const int posNum = sizeof(startPositions) / sizeof(startPositions[0]);
@@ -225,9 +151,10 @@ int main()
 			f *= -1;
 		}
 
-		
 		std::cout << f << std::endl;
 		startPositions[i] = glm::vec3(f * random_float(), f * random_float(), f * random_float());
+
+		
 	}
 
 	for (int i = 0; i < posNum; i++)
@@ -268,7 +195,6 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Shader
-
 		ourShader.use();
 
 		// Creates the model, view & projection matrix
@@ -333,10 +259,7 @@ int main()
 	}
 
 	glBindVertexArray(0);
-
 	glDeleteVertexArrays(1, &VAO);
-	glDeleteBuffers(1, &VBO);
-	glDeleteBuffers(1, &EBO);
 
 
 	glfwTerminate();
@@ -380,6 +303,29 @@ void processInput(GLFWwindow* window)
 		camera.ProcessKeyboard(DOWN, deltaTime);
 	}
 
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+	{
+		if (firstClick) 
+		{
+			glfwSetCursorPosCallback(window, mouse_callback);
+			// Tells GLFW to hide and capture the mouse
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+			firstClick = false;
+		}
+	}
+
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
+	{
+		if (!firstClick)
+		{
+			glfwSetCursorPosCallback(window, NULL);
+			// Tells GLFW to hide and capture the mouse
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+			firstClick = true;
+			firstMouse = true;
+		}
+	}
+
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -411,32 +357,6 @@ void mouse_callback(GLFWwindow* window, double xPosIn, double yPosIn)
 
 }
 
-//glm::vec3 calculateGravity(glm::vec3& position1, float mass1, const glm::vec3& position2, float mass2) {
-//	// Force = G * m1m2/r^2
-//	// F = ma 
-//	// Acceleration = G * m/r^2
-//
-//	float G = 0.0000000000667430f;
-//	//float G = 6.67430f;
-//
-//	glm::vec3 r = position2 - position1;
-//    float distance = glm::length(r);
-//
-//	// Avoid division by zero
-//	if (distance == 0.0f)
-//		return glm::vec3(0.0f, 0.0f, 0.0f);
-//
-//	// Normalize the distance vector
-//	glm::vec3 r_hat = glm::normalize(r);
-//
-//	// Calculate the gravitational force
-//	glm::vec3 force = -G * ((mass1 * mass2) / (distance * distance)) * r_hat;
-//
-//	// Calculate the transformation
-//	return force;
-//
-//}
-
 void gravity(glm::vec3 &position, float strength, glm::vec3 &speed, glm::vec3 gravityPos)
 {
 	float distanceX = position.x - gravityPos.x;
@@ -464,6 +384,5 @@ void gravity(glm::vec3 &position, float strength, glm::vec3 &speed, glm::vec3 gr
 	position.x += speed.x;
 	position.y += speed.y;
 	position.z += speed.z;
-
 
 }
