@@ -11,6 +11,6 @@ C:\Users\Ahmed Mohsen\OpenGL\Gravity Simulator\Sphere.h(43,25): warning C4305: '
 C:\Users\Ahmed Mohsen\OpenGL\Gravity Simulator\Sphere.h(46,30): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
   (compiling source file 'Main.cpp')
   
-C:\Users\Ahmed Mohsen\OpenGL\Gravity Simulator\Main.cpp(285,11): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\Ahmed Mohsen\OpenGL\Gravity Simulator\Main.cpp(325,21): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Ahmed Mohsen\OpenGL\Gravity Simulator\Main.cpp(133,11): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Ahmed Mohsen\OpenGL\Gravity Simulator\Main.cpp(174,21): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
   Gravity Simulator.vcxproj -> C:\Users\Ahmed Mohsen\OpenGL\Gravity Simulator\x64\Debug\Gravity Simulator.exe
