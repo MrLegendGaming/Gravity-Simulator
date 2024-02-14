@@ -76,7 +76,6 @@ int main()
 	// Centerring the window
 	glfwSetWindowPos(window, (mode->width - SCR_WIDTH/2) - (mode->width /2), (mode->height - SCR_HEIGHT / 2) - (mode->height / 2));
 
-
 	// Makes the window current context so we use it
 	glfwMakeContextCurrent(window);
 	// Changes the viewport to fit the screenwidth
@@ -161,9 +160,12 @@ int main()
 	}
 
 	for (int i = 0; i < posNum; i++)
+	{
+		newPosition[i] = startPositions[i];
+		initialVelocity[i] = glm::vec3(1.0f, 0.0f, 0.0f);
+	}
 
 	float time;
-	
 
 	// --------------------- MAIN WHILE LOOP ---------------------
 	while (!glfwWindowShouldClose(window))
@@ -215,7 +217,7 @@ int main()
 			unsigned int j = i;
 			glm::mat4 model = glm::mat4(1.0f);
 			model = glm::translate(model, newPosition[i]);
-			
+
 			if (i != 0)
 			{
 				gravity(newPosition[i], -25, initialVelocity[i], newPosition[0], playingSpeed);
@@ -245,6 +247,7 @@ int main()
 			else
 			{
 				particle.draw();
+				
 			}
 			
 		}
@@ -256,7 +259,10 @@ int main()
 
 	glBindVertexArray(0);
 	glDeleteVertexArrays(1, &VAO);
-
+	glDeleteShader(ourShader.ID);
+	delete[] startPositions;
+	delete[] newPosition;
+	delete[] initialVelocity;
 
 	glfwTerminate();
 	return 0;
