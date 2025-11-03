@@ -18,6 +18,7 @@ void processInput(GLFWwindow* window);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xPosIn, double yPosIn);
 void gravity(glm::vec3& position, float strength, glm::vec3& speed, glm::vec3 gravityPos, float playSpeed);
+void scroll_callback(GLFWwindow* window, double xOffSet, double yOffSet);
 
 #include <random>
 
@@ -80,7 +81,8 @@ int main()
 	glfwMakeContextCurrent(window);
 	// Changes the viewport to fit the screenwidth
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-	
+	// Registers scrolling
+	glfwSetScrollCallback(window, scroll_callback);
 
 	// Loads GLAD so we can use OpenGL and checks for errors if it fails
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -107,8 +109,8 @@ int main()
 	glBindVertexArray(VAO);
 
 	// Creates the sphere models for dawing
-	Sphere particle(0.25f);
-	Sphere sun(2.0f);
+	Sphere particle(1.0f);
+	Sphere sun(5.0f);
 
 	// --------------------- TRANSFORMATIONS ---------------------
 
@@ -120,7 +122,7 @@ int main()
 
 	// Creates the positions and intiial velocities of the particles & sun
 	// Sun's coordinate is index 0 or (first in the array list)
-	glm::vec3 startPositions[10000];
+	glm::vec3 startPositions[100];
 
 	const int posNum = sizeof(startPositions) / sizeof(startPositions[0]);
 
@@ -154,15 +156,20 @@ int main()
 		}
 
 		std::cout << f << std::endl;
-		startPositions[i] = glm::vec3(f * random_float(), f * random_float(), f * random_float());
+		startPositions[i] = glm::vec3(
+			50 * sin(f),
+			50 * cos(f),
+			0);
 		//startPositions[i] = glm::vec3(f);
 		
 	}
 
+	startPositions[0] = glm::vec3(0);
+
 	for (int i = 0; i < posNum; i++)
 	{
 		newPosition[i] = startPositions[i];
-		initialVelocity[i] = glm::vec3(1.0f, 0.0f, 0.0f);
+		initialVelocity[i] = glm::vec3(sqrt(0.5), 0.0f, 0.0f);
 	}
 
 	float time;
@@ -181,6 +188,7 @@ int main()
 		if (currentFrame - previousTime >= 1.0)
 		{
 			std::cout << "FPS: " << frameCount << std::endl;
+			std::cout << "Playing Speed: " << playingSpeed << std::endl;
 			frameCount = 0;
 			previousTime = currentFrame;
 		}
@@ -202,7 +210,7 @@ int main()
 
 		// Look at function (cameraPos, cameraTarget, worldUp)
 		view = camera.GetViewMatrix();
-		projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
+		projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 10000.0f);
 
 		int viewLoc = glGetUniformLocation(ourShader.ID, "view");
 		int projectionLoc = glGetUniformLocation(ourShader.ID, "projection");
@@ -220,20 +228,20 @@ int main()
 
 			if (i != 0)
 			{
-				gravity(newPosition[i], -25, initialVelocity[i], newPosition[0], playingSpeed);
+				gravity(newPosition[i], -50.0, initialVelocity[i], newPosition[0], playingSpeed);
 
 				glUniform3f(glGetUniformLocation(ourShader.ID, "ampColor"),
-					glm::sin(time * j),
-					glm::cos(time * j),
-					glm::atan(time * j)
+					initialVelocity[i].x,
+					initialVelocity[i].y,
+					initialVelocity[i].z
 				);
 			}
 			else
 			{
 				glUniform3f(glGetUniformLocation(ourShader.ID, "ampColor"),
-					time,
-					time,
-					0
+					1,
+					1,
+					1
 				);
 			}
 
@@ -273,7 +281,7 @@ void processInput(GLFWwindow* window)
 	// -- WINDOW --
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 	{
-		glfwSetWindowShouldClose(window, true);
+		exit(EXIT_FAILURE);
 	}
 
 	// -- MOVEMENT --
@@ -331,33 +339,31 @@ void processInput(GLFWwindow* window)
 			firstMouse = true;
 		}
 	}
-	// -- PLAY SPEED --
-	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-	{
-		if (!rewindPlay)
-		{
-			playingSpeed *= -1;
-			rewindPlay = true;
-		}
-
-	}
-	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-	{
-		if (rewindPlay)
-		{
-			playingSpeed *= -1;
-			rewindPlay = false;
-		}
-	}
 
 	// Play and Pause
 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
 	{
-		playingSpeed = 1.0f;
+		playingSpeed = 0.250f;
 	}
 	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
 	{
 		playingSpeed = 0.0f;
+	}
+
+}
+
+void scroll_callback(GLFWwindow* window, double xOffSet, double yOffSet)
+{
+	float scrollSpeed = 0.05f; // Scrolling Sensitivity
+	playingSpeed += static_cast<float>(yOffSet) * scrollSpeed;
+	
+	if (yOffSet < 0) 
+	{
+		if (playingSpeed <= 0) { playingSpeed = 0;} else {playingSpeed += static_cast<float>(yOffSet) * scrollSpeed;}
+	}
+	else
+	{
+		if (playingSpeed >= 2.0f) { playingSpeed = 2.0f;} else {playingSpeed += static_cast<float>(yOffSet) * scrollSpeed;}
 	}
 
 }
