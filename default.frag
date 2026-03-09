@@ -8,5 +8,5 @@ uniform vec3 ampColor;
 
 void main()
 {
-	gl_FragColor = vec4(vec3(1.0f, 0.4f, 0.7f) - vec3(0.3f, 0.5f, 0.5f) * ampColor, 1.0f);
+	gl_FragColor = vec4(vec3(0.0f, 0.5f, 1.0f) + (ampColor + vec3(0.5f)), 1.0f);
 }

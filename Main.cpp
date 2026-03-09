@@ -122,7 +122,7 @@ int main()
 
 	// Creates the positions and intiial velocities of the particles & sun
 	// Sun's coordinate is index 0 or (first in the array list)
-	glm::vec3 startPositions[100];
+	glm::vec3 startPositions[10000];
 
 	const int posNum = sizeof(startPositions) / sizeof(startPositions[0]);
 
@@ -155,12 +155,16 @@ int main()
 			f *= -1;
 		}
 
-		std::cout << f << std::endl;
-		startPositions[i] = glm::vec3(
-			50 * sin(f),
-			50 * cos(f),
-			0);
-		//startPositions[i] = glm::vec3(f);
+		// Normalize the index i to a range of 0 to 2*PI
+		float phi = (static_cast<float>(i) / 10000) * 2.0f * 3.14159265f;
+
+		// Parametric equations for a Trefoil Torus Knot
+		float x = sin(phi) + 2.0f * sin(2.0f * phi);
+		float y = cos(phi) - 2.0f * cos(2.0f * phi);
+		float z = -sin(3.0f * phi);
+
+		// Apply your 50.0f scale and assign to the vector
+		startPositions[i] = glm::vec3(x, y, z) * 50.0f;
 		
 	}
 
